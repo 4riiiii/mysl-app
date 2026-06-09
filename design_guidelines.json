@@ -1,0 +1,100 @@
+{
+  "project_name": "Mysl - AI Companion",
+  "theme": "Dark",
+  "archetype": "Hybrid: Archetype 5 (Luxury/Depth) blended with Archetype 1 (Organic/Soft) for a 'Cozy Night Room' feel.",
+  "color_palette": {
+    "background": "oklch(0.12 0 0)",
+    "foreground": "oklch(0.85 0.02 260)",
+    "primary": "oklch(0.62 0.18 260)",
+    "secondary": "oklch(0.6 0.18 290)",
+    "surface": "rgba(255, 255, 255, 0.03)",
+    "surface_hover": "rgba(255, 255, 255, 0.06)",
+    "border": "rgba(255, 255, 255, 0.08)",
+    "success": "oklch(0.7 0.1 160)",
+    "warning": "oklch(0.75 0.1 50)"
+  },
+  "typography": {
+    "headings": {
+      "family": "Fraunces, serif",
+      "weight": "font-light",
+      "style": "Soft, expressive, warm. Tracking-tight for larger sizes.",
+      "usage": "Used for 'Recovery Mode' welcome text, Session titles, Character speech bubbles to add a human, analog touch."
+    },
+    "body": {
+      "family": "Manrope, sans-serif",
+      "weight": "font-normal",
+      "style": "Clean, geometric, highly legible.",
+      "usage": "Used for auto-extracted tasks, live transcripts, insights, navigation, and small labels."
+    }
+  },
+  "layout_and_spacing": {
+    "strategy": "The 'Control Room' Grid but heavily padded for Zen focus. No visual clutter. Elements should feel like they are floating in space.",
+    "workspace_grid": "3-column layout. Left: History/Insights (25%). Center: Orb + Voice Bar (50%). Right: Tasks & Notes (25%). Center column is the primary focus area.",
+    "spacing_scale": "Generous. p-6, p-8, p-12. Containers must have internal padding.",
+    "border_radius": "rounded-2xl to rounded-3xl for major panels to feel soft, organic, and forgiving.",
+    "alignment": "Optical alignment over geometrical. Center the Orb and Voice Bar for an anchored feel."
+  },
+  "character_design": {
+    "name": "Mysl Companion",
+    "concept": "A soft, glowing, formless orb/blob. NOT a corporate mascot. Minimal facial features (just expressions via motion/glow). Should feel like a gentle presence in the room.",
+    "visual_execution": "CSS radial-gradients or framer-motion `div` with heavy blur (backdrop-blur). Mixes primary (blue) and secondary (purple) colors.",
+    "animations": {
+      "idle": "Slow scaling (scale 1 to 1.05) over 4-6 seconds to mimic deep breathing.",
+      "listening": "Outer glow increases, subtle ripple border.",
+      "speaking": "Quick pulsing synced to voice frequency/text reveal.",
+      "thinking": "Gradient rotation or slight horizontal squash (blinking)."
+    }
+  },
+  "component_instructions": {
+    "voice_capture_bar": {
+      "path": "frontend/src/components/ui/voice-bar.js",
+      "design": "Pill-shaped floating bar. Uses Glassmorphism (backdrop-blur-xl, bg-white/5, 1px border). Contains a dynamic audio waveform.",
+      "test_id": "voice-capture-bar"
+    },
+    "live_transcript": {
+      "path": "frontend/src/components/ui/live-transcript.js",
+      "design": "Vertical fade-out mask (mask-image: linear-gradient). Only shows the last 2-3 lines of text to prevent overwhelming the user. Fades text opacity for older words.",
+      "test_id": "live-transcript-panel"
+    },
+    "task_card": {
+      "path": "frontend/src/components/ui/task-card.js",
+      "design": "Flat, 1px subtle border, no heavy drop shadows. Gentle hover state. Checkmark uses 'success' mint color. No red/urgent text.",
+      "test_id": "auto-extracted-task"
+    },
+    "recovery_mode": {
+      "path": "frontend/src/components/ui/recovery-modal.js",
+      "design": "Full-screen overlay. Deepest background. Soft, centered Fraunces heading. Forgiving tone. 'Warm Peach' accent button to resume.",
+      "test_id": "recovery-mode-modal"
+    },
+    "notion_sync": {
+      "path": "frontend/src/components/ui/notion-sync-status.js",
+      "design": "Top right elegant pill. Shows 'Synced to Notion' with a tiny pulsing dot. Never red/error, only 'Syncing...' or 'Synced'.",
+      "test_id": "notion-sync-indicator"
+    },
+    "auth_pages": {
+      "path": "frontend/src/pages/auth.js",
+      "design": "Minimalist center card. Glassmorphic panel over the dark abstract noise background. Uses Shadcn Form, Input, Button heavily customized to match the dark aesthetic.",
+      "test_id": "auth-page-container"
+    }
+  },
+  "media_assets": {
+    "background_texture": {
+      "url": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwxfHxkYXJrJTIwYWJzdHJhY3QlMjBub2lzZSUyMHRleHR1cmV8ZW58MHx8fHwxNzgxMDE1NzYxfDA&ixlib=rb-4.1.0&q=85",
+      "usage": "Use with opacity 0.03 to 0.06 and mix-blend-overlay or soft-light as a full-screen background noise for tactile warmth.",
+      "category": "background"
+    }
+  },
+  "accessibility_and_testing": {
+    "motion": "Respect prefers-reduced-motion. Character breathing should be subtle. Remove all flashing or strobing effects.",
+    "contrast": "Ensure soft white-blue foreground text passes APCA contrast against the dark background.",
+    "test_ids": "MANDATORY: data-testid must be on all interactive elements using kebab-case role-based naming (e.g., start-session-button)."
+  },
+  "instructions_to_main_agent": [
+    "Use framer-motion for character animations. Ensure the orb uses the blue/purple gradient from the problem statement.",
+    "Override default shadcn styles to remove harsh borders and bright white backgrounds. Everything must align with the dark 'cozy' theme.",
+    "Do NOT use red for overdue or missed tasks. Use soft greys or the 'warning' peach color to remove guilt.",
+    "Install lucide-react for icons.",
+    "Install framer-motion for the companion breathing/pulsing.",
+    "CRITICAL: All generated files must be .js, not .tsx."
+  ]
+}
