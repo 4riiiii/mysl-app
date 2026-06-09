@@ -30,6 +30,8 @@ export default function CompanionMode() {
   const [sending, setSending] = useState(false);
   const [recent, setRecent] = useState([]);
   const logRef = useRef(null);
+  const sendingRef = useRef(false);
+  sendingRef.current = sending;
 
   // cycle ambient lines slowly
   useEffect(() => {
@@ -37,6 +39,39 @@ export default function CompanionMode() {
       setAmbient((a) => (a + 1) % AMBIENT.length);
     }, 7000);
     return () => clearInterval(t);
+  }, []);
+
+  // idle mood drift — every 45–90s, the orb subtly shifts mood for a few seconds, then returns to idle.
+  // Skips drift while user is chatting so it never fights the conversation animation.
+  useEffect(() => {
+    let scheduleId;
+    let returnId;
+    const MOODS = ["thinking", "listening", "speaking"];
+    const HOLD_MS = { thinking: 3200, listening: 2400, speaking: 1800 };
+
+    const scheduleNext = () => {
+      const delay = 45000 + Math.random() * 45000; // 45–90s
+      scheduleId = setTimeout(() => {
+        if (!sendingRef.current) {
+          const mood = MOODS[Math.floor(Math.random() * MOODS.length)];
+          setOrbState(mood);
+          // also nudge the ambient line so it feels intentional
+          setAmbient((a) => (a + 1) % AMBIENT.length);
+          returnId = setTimeout(() => {
+            if (!sendingRef.current) setOrbState("idle");
+            scheduleNext();
+          }, HOLD_MS[mood]);
+        } else {
+          scheduleNext();
+        }
+      }, delay);
+    };
+
+    scheduleNext();
+    return () => {
+      clearTimeout(scheduleId);
+      clearTimeout(returnId);
+    };
   }, []);
 
   // fetch recent sessions for the small "we've sat with" strip
