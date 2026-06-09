@@ -207,6 +207,13 @@ function StartScreen({ intent, setIntent, starting, onStart }) {
         {starting ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} fill="currentColor" />}
         sit down with mysl
       </button>
+      <a
+        href="/companion"
+        className="mt-4 font-body text-xs text-white/40 underline-offset-4 transition hover:text-white/70 hover:underline"
+        data-testid="start-screen-companion-link"
+      >
+        or just hang out — no session
+      </a>
     </div>
   );
 }

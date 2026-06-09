@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../lib/auth";
-import { LogOut, Sparkles, History, BarChart3 } from "lucide-react";
+import { LogOut, Sparkles, History, BarChart3, Moon } from "lucide-react";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -23,6 +23,15 @@ export default function Navbar() {
             data-testid="nav-workspace"
           >
             <Sparkles size={14} /> workspace
+          </Link>
+          <Link
+            to="/companion"
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 transition ${
+              loc.pathname.startsWith("/companion") ? "text-white bg-white/8" : "text-white/60 hover:text-white"
+            }`}
+            data-testid="nav-companion"
+          >
+            <Moon size={14} /> just sit
           </Link>
           <Link
             to="/sessions"

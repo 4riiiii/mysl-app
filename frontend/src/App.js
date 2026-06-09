@@ -6,6 +6,7 @@ import AuthCallback from "./pages/AuthCallback";
 import Workspace from "./pages/Workspace";
 import Sessions from "./pages/Sessions";
 import Insights from "./pages/Insights";
+import CompanionMode from "./pages/CompanionMode";
 import Navbar from "./components/Navbar";
 import Companion from "./components/Companion";
 import "./App.css";
@@ -37,6 +38,7 @@ function AppShell() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/workspace" element={<Protected><Workspace /></Protected>} />
+        <Route path="/companion" element={<Protected><CompanionMode /></Protected>} />
         <Route path="/sessions" element={<Protected><Sessions /></Protected>} />
         <Route path="/insights" element={<Protected><Insights /></Protected>} />
         <Route path="*" element={<Navigate to="/" replace />} />
