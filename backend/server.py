@@ -1,5 +1,5 @@
 """Mysl backend — FastAPI app."""
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form, Response
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form, Response, Cookie, Header
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 import os
@@ -62,8 +62,13 @@ async def google_session(body: GoogleSessionIn, response: Response):
 
 
 @api.post("/auth/logout")
-async def logout(response: Response, user: User = Depends(get_current_user)):
-    return await logout_user(response)
+async def logout(
+    response: Response,
+    session_token: Optional[str] = Cookie(default=None),
+    authorization: Optional[str] = Header(default=None),
+    user: User = Depends(get_current_user),
+):
+    return await logout_user(response, session_token=session_token, authorization=authorization)
 
 
 @api.get("/auth/me")
