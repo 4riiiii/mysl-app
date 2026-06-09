@@ -1,0 +1,54 @@
+{
+  "summary": "Tested Mysl MVP backend (12 pytest tests against public REACT_APP_BACKEND_URL) and frontend critical flows (Landing -> Login -> Workspace start -> Active session w/ 3 columns -> Companion chat -> End session -> /sessions list -> session-detail-modal -> /insights stat cards -> logout). 11/12 backend tests pass. One backend bug: /api/auth/logout returns 500 due to misuse of FastAPI dependency markers in helper signature. Frontend behaves correctly because it clears local token regardless, but the 500 surfaces in console.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "POST /api/auth/logout",
+        "issue": "Returns 500 (bson.errors.InvalidDocument: cannot encode object: Cookie(None)). Root cause: server.py calls `await logout_user(response)` passing only response, but `logout_user` is declared with FastAPI dependency markers (session_token: Optional[str] = Cookie(default=None), authorization: Optional[str] = Header(default=None)). When invoked directly (not as a FastAPI dependency), those parameters get the Cookie()/Header() marker objects as defaults, which then bypass the `if session_token:` truthy check and get passed into Mongo's `find_one`, causing BSON encode failure. Fix: in the route handler, declare these as Depends/Cookie/Header parameters and pass them explicitly to logout_user, OR change logout_user to accept the token via the get_current_user dep already declared in the route. The frontend's UX is unaffected (it clears localStorage anyway and navigates to /login), but server returns 500 instead of {ok: true}, and the user's session row is NOT deleted from the DB (so the bearer token continues to be valid until expiry).",
+        "priority": "HIGH"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Logout",
+        "issue": "Console shows 500 from /api/auth/logout (caused by backend bug above). Frontend recovers gracefully and routes to /login, but server-side session row remains, meaning the issued Bearer token in localStorage is still accepted by /api/auth/me for 7 days.",
+        "affected_selectors": ["[data-testid=\"logout-button\"]"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_mysl_api.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "FIX /api/auth/logout: make session_token cookie + Authorization header explicit FastAPI params on the route (or accept them via Depends) and pass to logout_user(); confirm the session row in `user_sessions` is deleted and the Bearer token is invalidated. Update test_register_login_me_logout_flow expectation only after fix is in."
+  ],
+  "critical_code_review_comments": [
+    "auth.py logout_user(): mixing FastAPI dependency markers (Cookie/Header) on a helper that is sometimes invoked directly is fragile. Either (a) make it a route function, or (b) accept plain optional str parameters and have the route resolve them via Depends.",
+    "server.py /api/auth/logout: it already has `user: User = Depends(get_current_user)`, so it could simply call sessions_col.delete_one({...}) using the bearer header extracted in the route to be much simpler.",
+    "Auth cookies are set with secure=True + samesite='none' which is correct for cross-site, but frontend currently uses Bearer-only (no withCredentials). That's intentional per agent_to_agent_context_note.",
+    "EmailStr in RegisterIn rejects reserved TLDs like .test (got 422). Acceptable; just a note for future test data.",
+    "Notion endpoint is hard-mocked (connected=true), as documented.",
+    "VoiceBar / /api/voice/transcribe not tested (no mic, per instructions)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_mysl_api.py"
+  ],
+  "success_rate": {"backend": "92% (11/12 pytest)", "frontend": "100% of testable flows"},
+  "test_credentials": "demo@mysl.app / MyslDemo2026! (seeded via test fixture; existed already or got created during this run).",
+  "seed_data_creation": "Test fixture auto-registers demo@mysl.app on first run (idempotent: falls back to login on 409). Cross-user isolation test creates ephemeral test_a_*@example.com and test_b_*@example.com accounts. Zero-state insights test creates ephemeral test_zero_*@example.com account. No teardown for the ephemeral users — they remain in DB.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend public URL https://mysl-workspace.preview.emergentagent.com/api works. All endpoints under /api. Bearer auth via header `Authorization: Bearer <session_token>` from /auth/register or /auth/login response body. Voice endpoint (/api/voice/transcribe) was NOT tested per instructions. Logout bug is the only outstanding issue — once fixed, rerun /app/backend/tests/test_mysl_api.py and the test_register_login_me_logout_flow case should pass end-to-end (it expects 200 from logout and 401 from /me after logout).",
+  "rca_of_logout_bug": {
+    "endpoint": "POST /api/auth/logout",
+    "reproduction": "curl -X POST $BASE/api/auth/logout -H 'Authorization: Bearer <valid_token>' -> 500 Internal Server Error",
+    "root_cause": "auth.py::logout_user has FastAPI dependency markers (Cookie/Header) in its signature, but server.py invokes it as a regular coroutine with only `response`. The Cookie()/Header() marker objects become the runtime values of session_token/authorization, pass the truthy check in _resolve_token, and get inserted into a mongo query which fails BSON encoding.",
+    "mitigation": "Refactor /api/auth/logout handler to accept session_token (Cookie) and authorization (Header) directly, or read them from request, and call a pure logout_user(token, response). Verify session row is removed from `user_sessions` and that the previous Bearer token now returns 401 from /api/auth/me."
+  }
+}

@@ -1,56 +1,58 @@
-import { useEffect } from "react";
-import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
-import { HOME } from "@/constants/testIds";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { AuthProvider, useAuth } from "./lib/auth";
+import Landing from "./pages/Landing";
+import Login from "./pages/Login";
+import AuthCallback from "./pages/AuthCallback";
+import Workspace from "./pages/Workspace";
+import Sessions from "./pages/Sessions";
+import Insights from "./pages/Insights";
+import Navbar from "./components/Navbar";
+import Companion from "./components/Companion";
+import "./App.css";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+function Protected({ children }) {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+  if (loading) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-5">
+        <Companion state="thinking" size={100} />
+        <p className="font-body text-xs text-white/40">a moment…</p>
+      </div>
+    );
+  }
+  if (!user) return <Navigate to="/login" replace state={{ from: location }} />;
+  return children;
+}
 
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
-
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
+function AppShell() {
+  const loc = useLocation();
+  // Handle session_id in URL hash synchronously during render
+  if (loc.hash?.includes("session_id=")) return <AuthCallback />;
 
   return (
-    <div>
-      <header className="App-header">
-        <a
-          data-testid={HOME.emergentLink}
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
+    <>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/workspace" element={<Protected><Workspace /></Protected>} />
+        <Route path="/sessions" element={<Protected><Sessions /></Protected>} />
+        <Route path="/insights" element={<Protected><Insights /></Protected>} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
-};
+}
 
-function App() {
+export default function App() {
   return (
     <div className="App">
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
+        <AuthProvider>
+          <AppShell />
+        </AuthProvider>
       </BrowserRouter>
     </div>
   );
 }
-
-export default App;
