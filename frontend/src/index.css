@@ -2,8 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Fonts: Fraunces (display) + Manrope (body) */
+/* Fonts: Fraunces (display) + Manrope (body) — main app */
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Manrope:wght@300;400;500;600;700&display=swap');
+/* Portfolio landing fonts: Inter + Instrument Serif */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap');
 
 :root {
   --mysl-bg: oklch(0.12 0 0);
@@ -163,4 +165,61 @@ html, body, #root {
 button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible {
   outline: 1px solid oklch(0.62 0.18 260 / 0.6);
   outline-offset: 2px;
+}
+
+/* --------- Portfolio Landing scoped theme (only on .portfolio-page) --------- */
+.portfolio-page {
+  /* HSL tokens for the new landing design */
+  --bg: 0 0% 4%;
+  --surface: 0 0% 8%;
+  --text: 0 0% 96%;
+  --muted: 0 0% 53%;
+  --stroke: 0 0% 12%;
+  --accent: 0 0% 96%;
+
+  background: hsl(var(--bg));
+  color: hsl(var(--text));
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+.portfolio-page .font-display {
+  font-family: 'Instrument Serif', ui-serif, Georgia, serif;
+}
+
+.portfolio-page .font-body {
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Accent gradient (used on logo ring, hover borders, progress bars) */
+.accent-gradient {
+  background: linear-gradient(90deg, #89AACC 0%, #4E85BF 100%);
+}
+
+/* Animated gradient border helper — wrap content in this and the border shimmers */
+.accent-gradient-anim {
+  background: linear-gradient(90deg, #89AACC 0%, #4E85BF 50%, #89AACC 100%);
+  background-size: 200% 200%;
+  animation: gradient-shift 6s ease infinite;
+}
+
+@keyframes scroll-down {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(200%); }
+}
+@keyframes role-fade-in {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+.animate-scroll-down { animation: scroll-down 1.5s ease-in-out infinite; }
+.animate-role-fade-in { animation: role-fade-in 0.4s ease-out; }
+
+/* Halftone dot overlay */
+.halftone-overlay {
+  background-image: radial-gradient(circle, #000 1px, transparent 1px);
+  background-size: 4px 4px;
 }

@@ -6,7 +6,8 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const nav = useNavigate();
   const loc = useLocation();
-  if (loc.pathname === "/" && !user) return <LandingNav />;
+  // Landing route owns its own portfolio-style navbar.
+  if (loc.pathname === "/") return null;
 
   return (
     <nav className="fixed left-0 right-0 top-0 z-40 flex items-center justify-between px-6 py-4 sm:px-10 glass" data-testid="app-nav">
