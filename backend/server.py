@@ -21,7 +21,7 @@ from db import (
 from models import (
     User, UserOut, RegisterIn, LoginIn, GoogleSessionIn, StartSessionIn,
     EndSessionIn, FocusSession, Task, Note, Transcript, CompanionMessage,
-    TaskUpdateIn, NoteUpdateIn, CompanionChatIn,
+    TaskUpdateIn, NoteUpdateIn, CompanionChatIn, VoicePrefIn,
 )
 from auth import (
     register_with_password, login_with_password, exchange_google_session,
@@ -74,11 +74,23 @@ async def logout(
     return await logout_user(response, session_token=session_token, authorization=authorization)
 
 
+VALID_VOICES = ("alloy", "ash", "coral", "echo", "fable", "nova", "onyx", "sage", "shimmer")
+
+
 @api.get("/auth/me")
 async def me(user: User = Depends(get_current_user)):
     return UserOut(
-        user_id=user.user_id, email=user.email, name=user.name, picture=user.picture
+        user_id=user.user_id, email=user.email, name=user.name, picture=user.picture,
+        voice=user.voice or "coral",
     ).model_dump()
+
+
+@api.patch("/auth/voice")
+async def update_voice(body: VoicePrefIn, user: User = Depends(get_current_user)):
+    if body.voice not in VALID_VOICES:
+        raise HTTPException(status_code=400, detail="invalid voice")
+    await users.update_one({"user_id": user.user_id}, {"$set": {"voice": body.voice}})
+    return {"voice": body.voice}
 
 
 # ---------- Focus sessions ----------
@@ -262,7 +274,10 @@ async def companion_speak(body: SpeakIn, user: User = Depends(get_current_user))
     text = (body.text or "").strip()
     if not text:
         raise HTTPException(status_code=400, detail="empty text")
-    voice = body.voice if body.voice in ("alloy", "ash", "coral", "echo", "fable", "nova", "onyx", "sage", "shimmer") else "coral"
+    # Prefer explicit voice in request, else user pref, else coral.
+    voice = body.voice or user.voice or "coral"
+    if voice not in VALID_VOICES:
+        voice = "coral"
     try:
         audio = await synthesize_speech(text, voice=voice)
     except Exception as e:

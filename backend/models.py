@@ -19,6 +19,7 @@ class User(BaseModel):
     name: str
     picture: Optional[str] = None
     auth_provider: Literal["google", "password"] = "password"
+    voice: Optional[str] = "coral"
     created_at: str = Field(default_factory=_now)
 
 
@@ -27,6 +28,11 @@ class UserOut(BaseModel):
     email: str
     name: str
     picture: Optional[str] = None
+    voice: Optional[str] = "coral"
+
+
+class VoicePrefIn(BaseModel):
+    voice: str
 
 
 class RegisterIn(BaseModel):

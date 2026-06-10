@@ -10,6 +10,7 @@ import NotionSync from "../components/NotionSync";
 import RecoveryModal from "../components/RecoveryModal";
 import Particles from "../components/Particles";
 import VoiceToggle from "../components/VoiceToggle";
+import SettingsDrawer from "../components/SettingsDrawer";
 import { Voice } from "../lib/voice";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Play, Square, StickyNote, Plus, Trash2 } from "lucide-react";
@@ -162,6 +163,7 @@ export default function Workspace() {
           </div>
           <NotionSync refreshKey={syncKey} />
           <VoiceToggle />
+          <SettingsDrawer />
         </div>
 
         {!session ? (

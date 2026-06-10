@@ -5,6 +5,7 @@ import { ArrowRight, Send } from "lucide-react";
 import Companion from "../components/Companion";
 import Particles from "../components/Particles";
 import VoiceToggle from "../components/VoiceToggle";
+import SettingsDrawer from "../components/SettingsDrawer";
 import api from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { Voice } from "../lib/voice";
@@ -125,7 +126,7 @@ export default function CompanionMode() {
         <p className="mt-2 max-w-md text-center font-body text-sm text-white/45">
           not working right now. just sitting with you.
         </p>
-        <div className="mt-5"><VoiceToggle /></div>
+        <div className="mt-5 flex items-center gap-2"><VoiceToggle /><SettingsDrawer /></div>
 
         {/* Big orb area */}
         <div className="relative my-12 flex flex-col items-center" data-testid="companion-mode-orb-wrap">

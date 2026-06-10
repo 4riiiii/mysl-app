@@ -69,6 +69,7 @@ async def register_with_password(email: str, password: str, name: str, response:
         "picture": None,
         "auth_provider": "password",
         "password_hash": _hash_password(password),
+        "voice": "coral",
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await users.insert_one(doc)
@@ -76,7 +77,7 @@ async def register_with_password(email: str, password: str, name: str, response:
     _set_session_cookie(response, token)
     return {
         "session_token": token,
-        "user": UserOut(user_id=user_id, email=email.lower(), name=name, picture=None).model_dump(),
+        "user": UserOut(user_id=user_id, email=email.lower(), name=name, picture=None, voice="coral").model_dump(),
     }
 
 
@@ -95,6 +96,7 @@ async def login_with_password(email: str, password: str, response: Response):
             email=user_doc["email"],
             name=user_doc["name"],
             picture=user_doc.get("picture"),
+            voice=user_doc.get("voice") or "coral",
         ).model_dump(),
     }
 
