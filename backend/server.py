@@ -29,8 +29,11 @@ from auth import (
 )
 from llm_service import (
     transcribe_audio, extract_from_transcript, companion_chat,
-    welcome_back_message, generate_session_summary,
+    welcome_back_message, generate_session_summary, synthesize_speech,
 )
+from fastapi.responses import Response as FastAPIResponse, StreamingResponse
+from io import BytesIO
+from pydantic import BaseModel
 
 app = FastAPI(title="Mysl API")
 api = APIRouter(prefix="/api")
@@ -246,6 +249,30 @@ async def voice_transcribe(
 
 # ---------- Tasks ----------
 @api.get("/tasks")
+
+
+# ---------- Companion voice (TTS) ----------
+class SpeakIn(BaseModel):
+    text: str
+    voice: Optional[str] = "coral"
+
+
+@api.post("/companion/speak")
+async def companion_speak(body: SpeakIn, user: User = Depends(get_current_user)):
+    text = (body.text or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="empty text")
+    voice = body.voice if body.voice in ("alloy", "ash", "coral", "echo", "fable", "nova", "onyx", "sage", "shimmer") else "coral"
+    try:
+        audio = await synthesize_speech(text, voice=voice)
+    except Exception as e:
+        log.exception("tts failed")
+        raise HTTPException(status_code=500, detail=f"tts failed: {e}")
+    return StreamingResponse(
+        BytesIO(audio),
+        media_type="audio/mpeg",
+        headers={"Cache-Control": "no-store"},
+    )
 async def list_tasks(session_id: Optional[str] = None, user: User = Depends(get_current_user)):
     q = {"user_id": user.user_id}
     if session_id:

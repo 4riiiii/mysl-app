@@ -8,7 +8,7 @@ from typing import Optional
 from io import BytesIO
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage
-from emergentintegrations.llm.openai import OpenAISpeechToText
+from emergentintegrations.llm.openai import OpenAISpeechToText, OpenAITextToSpeech
 
 log = logging.getLogger(__name__)
 
@@ -56,6 +56,27 @@ RULES:
 
 def _whisper_client() -> OpenAISpeechToText:
     return OpenAISpeechToText(api_key=EMERGENT_KEY)
+
+
+def _tts_client() -> OpenAITextToSpeech:
+    return OpenAITextToSpeech(api_key=EMERGENT_KEY)
+
+
+async def synthesize_speech(text: str, voice: str = "coral", speed: float = 0.95) -> bytes:
+    """Generate mp3 audio for Mysl's voice. Coral is warm + friendly — fits the ADHD-companion vibe."""
+    text = (text or "").strip()
+    if not text:
+        return b""
+    if len(text) > 4000:
+        text = text[:4000]
+    tts = _tts_client()
+    return await tts.generate_speech(
+        text=text,
+        model="tts-1",
+        voice=voice,
+        response_format="mp3",
+        speed=speed,
+    )
 
 
 def _build_chat(session_id: str, system_message: str) -> LlmChat:

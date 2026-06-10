@@ -4,8 +4,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Send } from "lucide-react";
 import Companion from "../components/Companion";
 import Particles from "../components/Particles";
+import VoiceToggle from "../components/VoiceToggle";
 import api from "../lib/api";
 import { useAuth } from "../lib/auth";
+import { Voice } from "../lib/voice";
 
 // Ambient lines that quietly cycle on screen when mysl is just hanging out.
 const AMBIENT = [
@@ -41,8 +43,7 @@ export default function CompanionMode() {
     return () => clearInterval(t);
   }, []);
 
-  // idle mood drift — every 45–90s, the orb subtly shifts mood for a few seconds, then returns to idle.
-  // Skips drift while user is chatting so it never fights the conversation animation.
+  // idle mood drift — every 45–90s, the orb subtly shifts mood for a few seconds.
   useEffect(() => {
     let scheduleId;
     let returnId;
@@ -50,12 +51,11 @@ export default function CompanionMode() {
     const HOLD_MS = { thinking: 3200, listening: 2400, speaking: 1800 };
 
     const scheduleNext = () => {
-      const delay = 45000 + Math.random() * 45000; // 45–90s
+      const delay = 45000 + Math.random() * 45000;
       scheduleId = setTimeout(() => {
         if (!sendingRef.current) {
           const mood = MOODS[Math.floor(Math.random() * MOODS.length)];
           setOrbState(mood);
-          // also nudge the ambient line so it feels intentional
           setAmbient((a) => (a + 1) % AMBIENT.length);
           returnId = setTimeout(() => {
             if (!sendingRef.current) setOrbState("idle");
@@ -66,7 +66,6 @@ export default function CompanionMode() {
         }
       }, delay);
     };
-
     scheduleNext();
     return () => {
       clearTimeout(scheduleId);
@@ -74,7 +73,15 @@ export default function CompanionMode() {
     };
   }, []);
 
-  // fetch recent sessions for the small "we've sat with" strip
+  // Sync orb's speaking state with audio playback
+  useEffect(() => {
+    return Voice.subscribe((e) => {
+      if (e.kind === "speaking") setOrbState("speaking");
+      else if (e.kind === "ended") setOrbState("idle");
+    });
+  }, []);
+
+  // recent sessions strip
   useEffect(() => {
     if (!user) return;
     api.get("/sessions").then(({ data }) => {
@@ -96,8 +103,7 @@ export default function CompanionMode() {
     try {
       const { data } = await api.post("/companion/chat", { message: text });
       setMessages((m) => [...m, { id: data.reply.message_id, role: "companion", text: data.reply.text }]);
-      setOrbState("speaking");
-      setTimeout(() => setOrbState("idle"), 2200);
+      if (data.reply?.text) Voice.speak(data.reply.text);
     } catch {
       setOrbState("idle");
     } finally {
@@ -119,6 +125,7 @@ export default function CompanionMode() {
         <p className="mt-2 max-w-md text-center font-body text-sm text-white/45">
           not working right now. just sitting with you.
         </p>
+        <div className="mt-5"><VoiceToggle /></div>
 
         {/* Big orb area */}
         <div className="relative my-12 flex flex-col items-center" data-testid="companion-mode-orb-wrap">

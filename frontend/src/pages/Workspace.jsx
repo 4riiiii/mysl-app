@@ -9,6 +9,8 @@ import TaskCard from "../components/TaskCard";
 import NotionSync from "../components/NotionSync";
 import RecoveryModal from "../components/RecoveryModal";
 import Particles from "../components/Particles";
+import VoiceToggle from "../components/VoiceToggle";
+import { Voice } from "../lib/voice";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Play, Square, StickyNote, Plus, Trash2 } from "lucide-react";
 
@@ -32,9 +34,20 @@ export default function Workspace() {
     if (!user) return;
     // Check recovery on mount
     api.get("/recovery/check").then(({ data }) => {
-      if (data?.should_recover) setRecovery(data);
+      if (data?.should_recover) {
+        setRecovery(data);
+        if (data.message) Voice.speak(data.message);
+      }
     }).catch(() => { /* noop */ });
   }, [user]);
+
+  // Sync orb's "speaking" state with mysl's audio playback.
+  useEffect(() => {
+    return Voice.subscribe((e) => {
+      if (e.kind === "speaking") setCompanionState("speaking");
+      else if (e.kind === "ended") setCompanionState("idle");
+    });
+  }, []);
 
   const startSession = async () => {
     setStarting(true);
@@ -43,8 +56,7 @@ export default function Workspace() {
       setSession(data.session);
       setTasks([]); setNotes([]); setTs([]);
       setMsgs(data.companion_message ? [data.companion_message] : []);
-      setCompanionState("speaking");
-      setTimeout(() => setCompanionState("idle"), 2200);
+      if (data.companion_message?.text) Voice.speak(data.companion_message.text);
     } finally {
       setStarting(false);
     }
@@ -57,6 +69,7 @@ export default function Workspace() {
       const { data } = await api.post(`/sessions/${session.session_id}/end`, { mood_after: null });
       setSession({ ...data.session });
       setMsgs((prev) => [...prev, { message_id: "summary", role: "companion", text: data.summary, created_at: new Date().toISOString() }]);
+      if (data.summary) Voice.speak(data.summary);
       setSyncKey((k) => k + 1);
     } finally {
       setProcessing(false);
@@ -77,11 +90,12 @@ export default function Workspace() {
       if (data.transcript && data.transcript.text) setTs((prev) => [...prev, data.transcript]);
       if (data.tasks?.length) setTasks((prev) => [...data.tasks, ...prev]);
       if (data.notes?.length) setNotes((prev) => [...data.notes, ...prev]);
-      if (data.companion_message) setMsgs((prev) => [...prev, data.companion_message]);
-      setCompanionState("speaking");
+      if (data.companion_message) {
+        setMsgs((prev) => [...prev, data.companion_message]);
+        if (data.companion_message.text) Voice.speak(data.companion_message.text);
+      }
       setSyncKey((k) => k + 1);
-      setTimeout(() => setCompanionState("idle"), 1800);
-    } catch (e) {
+    } catch {
       setCompanionState("idle");
     } finally {
       setProcessing(false);
@@ -117,8 +131,7 @@ export default function Workspace() {
     try {
       const { data } = await api.post("/companion/chat", { message: msg, session_id: session.session_id });
       setMsgs((prev) => [...prev, data.reply]);
-      setCompanionState("speaking");
-      setTimeout(() => setCompanionState("idle"), 1800);
+      if (data.reply?.text) Voice.speak(data.reply.text);
     } catch {
       setCompanionState("idle");
     }
@@ -148,6 +161,7 @@ export default function Workspace() {
             </h1>
           </div>
           <NotionSync refreshKey={syncKey} />
+          <VoiceToggle />
         </div>
 
         {!session ? (
